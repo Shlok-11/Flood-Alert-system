@@ -1,0 +1,82 @@
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+#include <curl/curl.h>
+
+using namespace std;
+
+// Replace with your OpenWeatherMap API key
+const string API_KEY = "YOUR_API_KEY_HERE";
+
+// String to store the API response
+string api_response;
+
+// libcurl write callback function
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+    ((string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+// Function to get rainfall from OpenWeatherMap API
+float getRainfall(string city) {
+    CURL* curl;
+    CURLcode res;
+    string url = "http://api.openweathermap.org/data/2.5/weather?q=" + city +
+                 "&appid=" + API_KEY + "&units=metric";
+
+    curl = curl_easy_init();
+    if (curl) {
+        api_response.clear();
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &api_response);
+
+        res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+    }
+
+    // Basic string-based parsing to extract rainfall (1h)
+    size_t rain_pos = api_response.find("\"rain\"");
+    if (rain_pos != string::npos) {
+        size_t mm_pos = api_response.find("1h", rain_pos);
+        if (mm_pos != string::npos) {
+            size_t colon = api_response.find(":", mm_pos);
+            size_t comma = api_response.find(",", colon);
+            string mm_str = api_response.substr(colon + 1, comma - colon - 1);
+            return stof(mm_str);
+        }
+    }
+
+    return 0.0;
+}
+
+// Flood risk checker
+string checkFloodRisk(string city, int riverLevel) {
+    float rainfall = getRainfall(city);
+
+    cout << "\nCity: " << city << endl;
+    cout << "Rainfall: " << rainfall << " mm (last 1h)" << endl;
+    cout << "River Level: " << riverLevel << "%" << endl;
+
+    if (rainfall > 200) return "YES";
+    else if (rainfall > 100 && riverLevel > 80) return "YES";
+    else return "NO";
+}
+
+// Main
+int main() {
+    string city;
+    int riverLevel;
+
+    cout << "Enter City Name: ";
+    getline(cin, city);
+
+    cout << "Enter River Level (%): ";
+    cin >> riverLevel;
+
+    string alert = checkFloodRisk(city, riverLevel);
+    cout << "🚨 Flood Alert: " << alert << endl;
+
+    return 0;
+}
