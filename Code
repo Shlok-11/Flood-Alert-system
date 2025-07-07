@@ -7,18 +7,18 @@
 using namespace std;
 
 // Replace with your OpenWeatherMap API key
-const string API_KEY = "YOUR_API_KEY_HERE";
+const string API_KEY = "13c25c268bfa2df700c786ff72db00ad";
 
-// String to store the API response
+
 string api_response;
 
-// libcurl write callback function
+
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
-// Function to get rainfall from OpenWeatherMap API
+
 float getRainfall(string city) {
     CURL* curl;
     CURLcode res;
@@ -36,7 +36,7 @@ float getRainfall(string city) {
         curl_easy_cleanup(curl);
     }
 
-    // Basic string-based parsing to extract rainfall (1h)
+    
     size_t rain_pos = api_response.find("\"rain\"");
     if (rain_pos != string::npos) {
         size_t mm_pos = api_response.find("1h", rain_pos);
@@ -51,7 +51,7 @@ float getRainfall(string city) {
     return 0.0;
 }
 
-// Flood risk checker
+
 string checkFloodRisk(string city, int riverLevel) {
     float rainfall = getRainfall(city);
 
@@ -64,7 +64,7 @@ string checkFloodRisk(string city, int riverLevel) {
     else return "NO";
 }
 
-// Main
+
 int main() {
     string city;
     int riverLevel;
